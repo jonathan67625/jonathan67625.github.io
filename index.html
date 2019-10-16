@@ -1,224 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 	<head>
-		<title>Snake & Apples</title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=divice-width, initial-scale=1">
+		<title>BootStrap 網頁</title>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+		<script src="https://code.jquery.com/jquery3.2.1.min.js"></script>
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		<style>
+			#items {background-color:lightblue}
+			aside  {border:solid 1px lightgray; border-radius:10px}
+			footer {background:linear-gradient(to bottom, lightblue, white)}
+		</style>
 	</head>
 	<body>
-		<canvas id="canvas" width="400" height="400"> </canvas>
-		<script src="https://code.jquery.com/jquery-2.1.0.js"></script>
-		<script>
-			// Set up canvas
-			var canvas = document.getElementById("canvas");
-			var ctx = canvas.getContext("2d");
-
-			// Get the width and height from the canvas element
-			var width = canvas.width;
-			var height = canvas.height;
-
-			// Work out the width and height in blocks
-			var blockSize = 10;
-			var widthInBlocks = width / blockSize;
-			var heightInBlocks = height / blockSize;
-
-			// Set score to 0
-			var score = 0;
-
-			// Draw the border
-			var drawBorder = function(){
-				ctx.fillStyle = "Gray";
-				ctx.fillRect(0, 0, width, blockSize);
-				ctx.fillRect(0, height - blockSize, width, blockSize);
-				ctx.fillRect(0, 0, blockSize, height);
-				ctx.fillRect(width - blockSize, 0, blockSize, height);
-			};
-
-			// Draw the score in the top-left corner
-			var drawScore = function(){
-				ctx.font = "20px Courier";
-				ctx.fillStyle = "Black";
-				ctx.textAlign = "left";
-				ctx.textBaseline = "top";
-				ctx.fillText("Score: " + score, blockSize, blockSize);
-			};
-
-			// Clear the interval and display Game Over text
-			var gameOver = function(){
-				clearInterval(intervalId);
-				ctx.font = "60px Courier";
-				ctx.fillStyle = "Black";
-				ctx.textAlign = "center";
-				ctx.textBaseline = "middle";
-				ctx.fillText("Game Over!", width / 2, height / 2);
-			};
-
-			// Draw a circle (using the function from Chapter 14)
-			var circle = function(x, y, radius, fillCircle){
-				ctx.beginPath();
-				ctx.arc(x, y, radius, 0, Math.PI * 2, false);
-				if(fillCircle){
-					ctx.fill();
-				}else{
-					ctx.stroke();
-				}
-			}
-
-			// The Block constructor
-			var Block = function(col, row){
-				this.col = col;
-				this.row = row;
-			};
-
-			// Draw a square at the  block's location
-			Block.prototype.drawSquare = function(color){
-				var x = this.col * blockSize;
-				var y = this.row * blockSize;
-				ctx.fillStyle = color;
-				ctx.fillRect(x, y, blockSize, blockSize);
-			};
-
-			// Draw a circle at the block's location
-			Block.prototype.drawCircle = function(color){
-				var centerX = this.col * blockSize + blockSize / 2;
-				var centerY = this.row * blockSize + blockSize / 2;
-				ctx.fillStyle = color;
-				circle(centerX, centerY, blockSize / 2, true);
-			};
-
-			// Check if this block is in the same location as another block
-			Block.prototype.equal = function(otherBlock){
-				return this.col === otherBlock.col && this.row === otherBlock.row;
-			}
-
-			// The Snake constructor
-			var Snake = function(){
-				this.segments = [
-					new Block(7,5),
-					new Block(6,5),
-					new Block(5,5)
-				];
-				this.direction = "right";
-				this.nextDirection = "right";
-			};
-
-			// Draw a square for each segment of the snake's body
-			Snake.prototype.draw = function(){
-				for (var i = 0; i < this.segments.length; i++) {
-					this.segments[i].drawSquare("Blue");
-				}
-			};
-
-			// Create a new head and add it to the beginning of
-			// the snake to move the snake in its current direction
-			Snake.prototype.move = function(){
-				var head = this.segments[0];
-				var newHead;
-				this.direction = this.nextDirection;
-
-				if(this.direction === "right"){
-					newHead = new Block(head.col + 1, head.row);
-				}else if(this.direction === "down"){
-					newHead = new Block(head.col, head.row + 1);
-				}else if(this.direction === "left"){
-					newHead = new Block(head.col - 1, head.row);
-				}else if(this.direction === "up"){
-					newHead = new Block(head.col, head.row - 1);
-				}
-
-				if(this.checkCollision(newHead)){
-					gameOver();
-					return;
-				}
-
-				this.segments.unshift(newHead);
-
-				if(newHead.equal(apple.position)){
-					score ++;
-					apple.move();
-				}else{
-					this.segments.pop();
-				}
-			};
-
-			// Check if the snake's new head has collided with the wall or itself
-			Snake.prototype.checkCollision = function(head){
-				var leftCollision   = (head.col === 0);
-				var topCollision    = (head.row === 0);
-				var rightCollision  = (head.col === widthInBlocks - 1);
-				var bottomCollision = (head.row === heightInBlocks - 1);
-
-				var wallCollision = leftCollision || topCollision || rightCollision || bottomCollision;
-
-				var selfCollision = false;
-
-				for (var i = 0; i < this.segments.length; i++) {
-					if(head.equal(this.segments[i])){
-						selfCollision = true;
-					}
-				}
-
-				return wallCollision || selfCollision;
-			};
-
-			// Set the snake's next direction based on the keyboard
-			Snake.prototype.setDirection = function(newDirection){
-				if(this.directions === "up" && newDirection === "down"){
-					return;
-				}else if(this.directions === "right" && newDirection === "left"){
-					return;
-				}else if(this.directions === "down" && newDirection === "up"){
-					return;
-				}else if(this.directions === "left" && newDirection === "right"){
-					return;
-				}
-
-				this.nextDirection = newDirection;
-			};
-
-			// The Apple constructor
-			var Apple = function(){
-				this.position = new Block(10, 10);
-			};
-
-			// Draw a circle at the apple's location
-			Apple.prototype.draw = function(){
-				this.position.drawCircle("LimeGreen");
-			};
-
-			// Move the apple to a new random location
-			Apple.prototype.move = function(){
-				var randomCol = Math.floor(Math.random() * (widthInBlocks-2)) + 1;
-				var randomRow = Math.floor(Math.random() * (heightInBlocks-2)) + 1;
-				this.position = new Block(randomCol, randomRow);
-			};
-
-			// Create the snake and apple objects
-			var snake = new Snake();
-			var apple = new Apple();
-
-			// Pass an animation function to setInterval
-			var intervalId = setInterval( function(){
-				ctx.clearRect(0, 0, width, height);
-				drawScore();
-				snake.move();
-				snake.draw();
-				apple.draw();
-				drawBorder();
-			}, 200);
-
-			var directions = {
-				37: "left",
-				38: "up",
-				39: "right",
-				40: "down"
-			};
-
-			// The keydown handler for handing direction key presses
-			$("body").keydown(function(event){
-				var newDirection = directions[event.keyCode];
-				if(newDirection !== undefined){
-					snake.setDirection(newDirection);
-				}
-			});
-		</script>
+	<div class="container">
+		<div class="row">
+			<div class="col-xs-12 col-sm-12 col-md-12">
+				<header>
+					<img src="img1.jpg" class="img-responsive">
+					<nav id="items">
+						<ul class="list-inline">
+							<li><a href="item1.html">機票</a></li>
+							<li><a href="item2.html">訂房</a></li>
+							<li><a href="item3.html">團體</a></li>
+							<li><a href="item4.html">自由行</a></li>
+						</ul>
+					</nav>
+				</header>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-12 col-sm-8 col-md-8">
+				<article>
+					<p>你上次一個旅行是什麼時候？東海岸正是你帶著輕便的行李去流浪的最佳選擇！</p>
+					<img src="img2.jpg" class="img-responsive">
+				</article>
+			</div>
+			<div class="col-xs-12 col-sm-4 col-md-4">
+				<aside>
+					<h3>主題旅遊</h3>
+					<nav id="travels">
+						<ul>
+							<li><a href="snake.html">貪吃蛇</a></li>
+							<li><a href="travel2.html">走讀:鳥踏石離鄉30年</a></li>
+							<li><a href="travel3.html">東海岸大地藝術節</a></li>
+							<li><a href="travel4.html">阿米斯音樂節</a></li>
+							<li><a href="travel5.html">鐵花村音樂聚落.慢市集</a></li>
+						</ul>
+					</nav>
+				</aside>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-12 col-sm-12 col=md-12">
+				<footer>
+					<p>東岸微風旅行社<br>
+					聯絡人: 清風 0971 520 050</p>
+				</footer>
+			</div>
+		</div>
+	</div>
 	</body>
 </html>
